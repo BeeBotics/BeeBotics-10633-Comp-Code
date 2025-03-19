@@ -116,7 +116,7 @@ public class RobotContainer {
         m_operatorController.a().whileFalse(
                 new MoveElevatorToPositionCommand(m_Elevator, 0).alongWith(
                         new MoveArmToRotationCommand(m_arm, 0)));
-    // Placement Test
+    // Test Placement
         m_operatorController.leftBumper().whileTrue(
                 new MoveArmToRotationCommand(m_arm, m_arm.getRotation() - 0.01));
         m_operatorController.leftBumper().whileFalse(

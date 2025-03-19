@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 5.070799180327868,
-        "y": 5.38560450819672
+        "x": 7.2165983606557385,
+        "y": 3.815215163934426
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.4912520633040574,
-        "y": 6.353728472495256
+        "x": 6.728683877990084,
+        "y": 4.188989287357353
       },
       "isLocked": false,
-      "linkedName": "Stick "
+      "linkedName": "Middle"
     },
     {
       "anchor": {
-        "x": 1.7142418032786886,
-        "y": 7.255686475409835
+        "x": 6.017827868852459,
+        "y": 3.815215163934426
       },
       "prevControl": {
-        "x": 2.5124332182716476,
-        "y": 6.670287785912608
+        "x": 6.5481476271766335,
+        "y": 3.5884397281533156
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "Wall Station"
+      "linkedName": "Stick A"
     }
   ],
   "rotationTargets": [],
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -52.85331330197822
+    "rotation": 180.0
   },
   "reversed": false,
-  "folder": "Left",
+  "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -120.96375653207349
+    "rotation": 0.0
   },
   "useDefaultConstraints": true
 }

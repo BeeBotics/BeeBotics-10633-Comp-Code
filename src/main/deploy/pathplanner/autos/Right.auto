@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Wall right to stick C"
+                  "pathName": "R Coral 1 From Start"
                 }
               },
               {
@@ -32,13 +32,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Stick C to Right wall deposit"
+            "pathName": "R Coral 1 to Station"
           }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "2025 comp",
+  "folder": null,
   "choreoAuto": false
 }
