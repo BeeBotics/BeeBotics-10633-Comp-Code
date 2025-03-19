@@ -87,29 +87,32 @@ public class RobotContainer {
                 .whileTrue(new RunCommand(
                         () -> m_robotDrive.setX(),
                         m_robotDrive));
-        // Placement Test For Driver
-        new JoystickButton(m_driverController, Button.kR1.value)
-                .whileTrue(new MoveArmToRotationCommand(m_arm, m_arm.getRotation() + 0.01)).whileFalse(
-                        new MoveArmToRotationCommand(m_arm, m_arm.getRotation() - 0.01));
 
         // L4
         m_operatorController.x().whileTrue(
                 new MoveElevatorToPositionCommand(m_elevator, -1).alongWith(
-                        new MoveArmToRotationCommand(m_arm, -0.021)))
+                        new MoveArmToRotationCommand(m_arm, -0.02))) // Changed from comp # of -0.021
                 .whileFalse(
                         new MoveElevatorToPositionCommand(m_elevator, 0).alongWith(
                                 new MoveArmToRotationCommand(m_arm, 0)));
         // L3
         m_operatorController.b().whileTrue(
                 new MoveElevatorToPositionCommand(m_elevator, -0.05).alongWith(
-                        new MoveArmToRotationCommand(m_arm, -0.022)))
+                        new MoveArmToRotationCommand(m_arm, -0.0215))) // Changed from comp # of -0.022
                 .whileFalse(
                         new MoveArmToRotationCommand(m_arm, 0).andThen(
                                 new MoveElevatorToPositionCommand(m_elevator, 0)));
         // L2
         m_operatorController.y().whileTrue(
                 new MoveElevatorToPositionCommand(m_elevator, 0.15).alongWith(
-                        new MoveArmToRotationCommand(m_arm, -0.018)))
+                        new MoveArmToRotationCommand(m_arm, -0.017))) // Changed from comp # of -0.018
+                .whileFalse(
+                        new MoveElevatorToPositionCommand(m_elevator, 0).alongWith(
+                                new MoveArmToRotationCommand(m_arm, 0)));
+        // L1
+        m_operatorController.rightTrigger().whileTrue(
+                new MoveArmToRotationCommand(m_arm, -0.015).andThen(
+                        new MoveElevatorToPositionCommand(m_elevator, 0.3)))
                 .whileFalse(
                         new MoveElevatorToPositionCommand(m_elevator, 0).alongWith(
                                 new MoveArmToRotationCommand(m_arm, 0)));
@@ -120,10 +123,6 @@ public class RobotContainer {
                 .whileFalse(
                         new MoveElevatorToPositionCommand(m_elevator, 0).alongWith(
                                 new MoveArmToRotationCommand(m_arm, 0)));
-        // Test Placement
-        m_operatorController.leftBumper().whileTrue(
-                new MoveArmToRotationCommand(m_arm, m_arm.getRotation() + 0.01)).whileFalse(
-                        new MoveArmToRotationCommand(m_arm, m_arm.getRotation() - 0.01));
         // Reset Arm
         m_operatorController.rightBumper().whileTrue(
                 new MoveArmToRotationCommand(m_arm, 0.005)).whileFalse(

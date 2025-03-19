@@ -17,6 +17,9 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import com.pathplanner.lib.config.RobotConfig;
 import frc.robot.Constants;
@@ -56,6 +59,10 @@ public class DriveSubsystem extends SubsystemBase {
   SwerveDrive swerveDrive;
   private final SwerveDriveKinematics kinematics;
   private final SimSwerveModule[] modules;
+
+  private static final NetworkTableInstance NTinstance = NetworkTableInstance.getDefault();
+  private static final NetworkTable TableOut = NTinstance.getTable("table");
+  private final StructPublisher<Pose2d> publishRobotPose;
 
   // Create MAXSwerveModules
   private final MAXSwerveModule m_frontLeft = new MAXSwerveModule(
@@ -109,6 +116,7 @@ public class DriveSubsystem extends SubsystemBase {
       Constants.Swerve.blModuleOffset, 
       Constants.Swerve.brModuleOffset
     );
+    publishRobotPose = TableOut.getStructTopic("RobotPose", Pose2d.struct).publish();
   }
 
   @Override
@@ -123,7 +131,7 @@ public class DriveSubsystem extends SubsystemBase {
             m_rearRight.getPosition()
         });
         
-  
+        publishRobotPose.set(getPose());
   }
 
   /**
