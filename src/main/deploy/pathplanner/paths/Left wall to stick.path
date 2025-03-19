@@ -1,0 +1,54 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 7.19262295081434,
+        "y": 7.531403688522672
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 6.10078200320666,
+        "y": 7.749804246538264
+      },
+      "isLocked": false,
+      "linkedName": "Left wall"
+    },
+    {
+      "anchor": {
+        "x": 5.070799180327868,
+        "y": 5.38560450819672
+      },
+      "prevControl": {
+        "x": 5.651849588081827,
+        "y": 6.2925122517746415
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "Stick "
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 1.5,
+    "maxAcceleration": 1.5,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": -120.96375653207349
+  },
+  "reversed": false,
+  "folder": "Left",
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": 0.0
+  },
+  "useDefaultConstraints": true
+}

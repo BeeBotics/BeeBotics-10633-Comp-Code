@@ -1,0 +1,44 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Wall right to stick C"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Place L4"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ReHome"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Stick C to Right wall deposit"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": "2025 comp",
+  "choreoAuto": false
+}
