@@ -8,8 +8,8 @@ public class MoveElevatorToPositionCommand extends Command {
     private final elevator elevator;
     private final double position;
          
-    public MoveElevatorToPositionCommand(elevator _elevator, double _position) {
-        elevator = _elevator;
+    public MoveElevatorToPositionCommand(elevator m_elevator, double _position) {
+        elevator = m_elevator;
         position = _position;
 
         addRequirements(elevator);

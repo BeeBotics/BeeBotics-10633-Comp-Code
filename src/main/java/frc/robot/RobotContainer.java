@@ -25,7 +25,7 @@ public class RobotContainer {
     // The robot's subsystems
 
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
-    private final elevator m_Elevator = new elevator();
+    private final elevator m_elevator = new elevator();
     private final Arm m_arm = new Arm();
     private final SendableChooser<Command> autoChooser;
 
@@ -40,10 +40,10 @@ public class RobotContainer {
         // Configure the button bindings
 
         NamedCommands.registerCommand("Place L4",
-                new MoveElevatorToPositionCommand(m_Elevator, -1).alongWith(
+                new MoveElevatorToPositionCommand(m_elevator, -1).alongWith(
                         new MoveArmToRotationCommand(m_arm, -0.021)));
         NamedCommands.registerCommand("ReHome",
-                new MoveElevatorToPositionCommand(m_Elevator, 0).andThen(
+                new MoveElevatorToPositionCommand(m_elevator, 0).andThen(
                         new MoveArmToRotationCommand(m_arm, 0)));
 
         configureButtonBindings();
@@ -83,45 +83,48 @@ public class RobotContainer {
      * {@link JoystickButton}.
      */
     private void configureButtonBindings() {
-        new JoystickButton(m_driverController, Button.kR1.value)
+        new JoystickButton(m_driverController, Button.kL1.value)
                 .whileTrue(new RunCommand(
                         () -> m_robotDrive.setX(),
                         m_robotDrive));
+        // Placement Test For Driver
+        new JoystickButton(m_driverController, Button.kR1.value)
+                .whileTrue(new MoveArmToRotationCommand(m_arm, m_arm.getRotation() + 0.01)).whileFalse(
+                        new MoveArmToRotationCommand(m_arm, m_arm.getRotation() - 0.01));
 
-    // L4
+        // L4
         m_operatorController.x().whileTrue(
-                new MoveElevatorToPositionCommand(m_Elevator, -1).alongWith(
-                        new MoveArmToRotationCommand(m_arm, -0.021)));
-        m_operatorController.x().whileFalse(
-                new MoveElevatorToPositionCommand(m_Elevator, 0).alongWith(
-                        new MoveArmToRotationCommand(m_arm, 0)));
-    // L3
+                new MoveElevatorToPositionCommand(m_elevator, -1).alongWith(
+                        new MoveArmToRotationCommand(m_arm, -0.021)))
+                .whileFalse(
+                        new MoveElevatorToPositionCommand(m_elevator, 0).alongWith(
+                                new MoveArmToRotationCommand(m_arm, 0)));
+        // L3
         m_operatorController.b().whileTrue(
-                new MoveElevatorToPositionCommand(m_Elevator, -0.05).alongWith(
-                        new MoveArmToRotationCommand(m_arm, -0.022)));
-        m_operatorController.b().whileFalse(
-                new MoveElevatorToPositionCommand(m_Elevator, 0).alongWith(
-                        new MoveArmToRotationCommand(m_arm, 0)));
-    // L2
+                new MoveElevatorToPositionCommand(m_elevator, -0.05).alongWith(
+                        new MoveArmToRotationCommand(m_arm, -0.022)))
+                .whileFalse(
+                        new MoveArmToRotationCommand(m_arm, 0).andThen(
+                                new MoveElevatorToPositionCommand(m_elevator, 0)));
+        // L2
         m_operatorController.y().whileTrue(
-                new MoveElevatorToPositionCommand(m_Elevator, 0.15).alongWith(
-                        new MoveArmToRotationCommand(m_arm, -0.018)));
-        m_operatorController.y().whileFalse(
-                new MoveElevatorToPositionCommand(m_Elevator, 0).alongWith(
-                        new MoveArmToRotationCommand(m_arm, 0)));
-    // Yoink
+                new MoveElevatorToPositionCommand(m_elevator, 0.15).alongWith(
+                        new MoveArmToRotationCommand(m_arm, -0.018)))
+                .whileFalse(
+                        new MoveElevatorToPositionCommand(m_elevator, 0).alongWith(
+                                new MoveArmToRotationCommand(m_arm, 0)));
+        // Yoink
         m_operatorController.a().whileTrue(
-                new MoveElevatorToPositionCommand(m_Elevator, 0.6).alongWith(
-                        new MoveArmToRotationCommand(m_arm, 0)));
-        m_operatorController.a().whileFalse(
-                new MoveElevatorToPositionCommand(m_Elevator, 0).alongWith(
-                        new MoveArmToRotationCommand(m_arm, 0)));
-    // Test Placement
+                new MoveElevatorToPositionCommand(m_elevator, 0.6).alongWith(
+                        new MoveArmToRotationCommand(m_arm, 0)))
+                .whileFalse(
+                        new MoveElevatorToPositionCommand(m_elevator, 0).alongWith(
+                                new MoveArmToRotationCommand(m_arm, 0)));
+        // Test Placement
         m_operatorController.leftBumper().whileTrue(
-                new MoveArmToRotationCommand(m_arm, m_arm.getRotation() - 0.01));
-        m_operatorController.leftBumper().whileFalse(
-                new MoveArmToRotationCommand(m_arm, m_arm.getRotation() + 0.01));
-    // Reset Arm
+                new MoveArmToRotationCommand(m_arm, m_arm.getRotation() + 0.01)).whileFalse(
+                        new MoveArmToRotationCommand(m_arm, m_arm.getRotation() - 0.01));
+        // Reset Arm
         m_operatorController.rightBumper().whileTrue(
                 new MoveArmToRotationCommand(m_arm, 0.005)).whileFalse(
                         new InstantCommand(() -> m_arm.resetRotation()));
