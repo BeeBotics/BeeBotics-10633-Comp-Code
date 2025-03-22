@@ -24,7 +24,7 @@ public class MoveElevatorToPositionCommand extends Command {
     @Override
     public boolean isFinished() {
         // End the command when the elevator reaches the desired position
-        return Math.abs(elevator.getHeight() - position) < 0.1;
+        return Math.abs(elevator.getHeight() - position) < 0.2;
     }
 }
 

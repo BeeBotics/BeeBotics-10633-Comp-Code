@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 5.010860655737704,
-        "y": 2.9880635245901637
-      },
-      "prevControl": null,
-      "nextControl": {
-        "x": 4.21735747861317,
-        "y": 2.486318969924033
-      },
-      "isLocked": false,
-      "linkedName": "Stick C"
-    },
-    {
-      "anchor": {
         "x": 1.582,
         "y": 0.734
       },
+      "prevControl": null,
+      "nextControl": {
+        "x": 1.8451139285523397,
+        "y": 0.9333255509680622
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 3.4164959016393444,
+        "y": 3.083965163934426
+      },
       "prevControl": {
-        "x": 2.1717974827439175,
-        "y": 1.1677551058679814
+        "x": 3.0121050682020614,
+        "y": 2.6704090497867212
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "right wall deposit"
+      "linkedName": null
     }
   ],
   "rotationTargets": [],
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 53.0
+    "rotation": 59.99999999999999
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 119.99999999999999
+    "rotation": 53.0
   },
   "useDefaultConstraints": true
 }

@@ -19,7 +19,7 @@ public final class Configs {
             double drivingVelocityFeedForward = 1 / ModuleConstants.kDriveWheelFreeSpeedRps;
 
             drivingConfig
-                    .idleMode(IdleMode.kCoast)
+                    .idleMode(IdleMode.kBrake)
                     .smartCurrentLimit(50);
             drivingConfig.encoder
                     .positionConversionFactor(drivingFactor) // meters
@@ -32,7 +32,7 @@ public final class Configs {
                     .outputRange(-1, 1);
 
             turningConfig
-                    .idleMode(IdleMode.kCoast)
+                    .idleMode(IdleMode.kBrake)
                     .smartCurrentLimit(20);
             turningConfig.absoluteEncoder
                     // Invert the turning encoder, since the output shaft rotates in the opposite

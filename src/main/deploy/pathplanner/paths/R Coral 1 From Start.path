@@ -8,20 +8,20 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.085751143990732,
-        "y": 0.41256563880455066
+        "x": 6.46112200841571,
+        "y": 1.2887583452945988
       },
       "isLocked": false,
       "linkedName": "Right Wall Start"
     },
     {
       "anchor": {
-        "x": 5.058811475409836,
-        "y": 2.6643954918032784
+        "x": 5.010860655737704,
+        "y": 2.9880635245901637
       },
       "prevControl": {
-        "x": 5.556269247289948,
-        "y": 1.8250471820990448
+        "x": 5.6170336741146585,
+        "y": 2.145365510093641
       },
       "nextControl": null,
       "isLocked": false,
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 120.69972255081433
+    "rotation": 119.99999999999999
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -1.1017061152063063
+    "rotation": 180.0
   },
   "useDefaultConstraints": true
 }

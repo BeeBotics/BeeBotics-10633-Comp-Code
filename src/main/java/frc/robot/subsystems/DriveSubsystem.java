@@ -19,6 +19,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import com.pathplanner.lib.config.RobotConfig;
@@ -26,6 +27,7 @@ import frc.robot.Constants;
 import java.io.File;
 import static edu.wpi.first.units.Units.Meter;
 
+import com.ctre.phoenix6.swerve.jni.SwerveJNI.ModuleState;
 //import com.ctre.phoenix6.swerve.SimSwerveDrivetrain.SimSwerveModule;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
@@ -63,6 +65,8 @@ public class DriveSubsystem extends SubsystemBase {
   private static final NetworkTableInstance NTinstance = NetworkTableInstance.getDefault();
   private static final NetworkTable TableOut = NTinstance.getTable("table");
   private final StructPublisher<Pose2d> publishRobotPose;
+  private final StructArrayPublisher<SwerveModuleState> moduleStatePublisher;
+  private final StructPublisher<ChassisSpeeds> chassisSpeedPublisher;
 
   // Create MAXSwerveModules
   private final MAXSwerveModule m_frontLeft = new MAXSwerveModule(
@@ -110,13 +114,17 @@ public class DriveSubsystem extends SubsystemBase {
       new SimSwerveModule(),
       new SimSwerveModule()
     };
-    kinematics = new SwerveDriveKinematics(
-      Constants.Swerve.flModuleOffset, 
-      Constants.Swerve.frModuleOffset, 
-      Constants.Swerve.blModuleOffset, 
-      Constants.Swerve.brModuleOffset
-    );
+
+    kinematics = Constants.DriveConstants.kDriveKinematics;
+    // kinematics = new SwerveDriveKinematics(
+    //   Constants.Swerve.flModuleOffset, 
+    //   Constants.Swerve.frModuleOffset, 
+    //   Constants.Swerve.blModuleOffset, 
+    //   Constants.Swerve.brModuleOffset
+    // );
     publishRobotPose = TableOut.getStructTopic("RobotPose", Pose2d.struct).publish();
+    moduleStatePublisher = TableOut.getStructArrayTopic("Module States", SwerveModuleState.struct).publish();
+    chassisSpeedPublisher = TableOut.getStructTopic("Chassis Speeds", ChassisSpeeds.struct).publish();
   }
 
   @Override
@@ -132,8 +140,11 @@ public class DriveSubsystem extends SubsystemBase {
         });
         
         publishRobotPose.set(getPose());
-  }
 
+  }
+  public void setGyro(double angle) {
+    m_gyro.setAngleAdjustment(angle);
+  }
   /**
    * Returns the currently-estimated pose of the robot.
    *
@@ -187,6 +198,7 @@ public class DriveSubsystem extends SubsystemBase {
     m_rearLeft.setDesiredState(swerveModuleStates[2]);
     m_rearRight.setDesiredState(swerveModuleStates[3]);
 
+    moduleStatePublisher.set(swerveModuleStates);
   }
 
   /**
@@ -232,7 +244,7 @@ public class DriveSubsystem extends SubsystemBase {
    * @return the robot's heading in degrees, from -180 to 180
    */
   public double getHeading() {
-    return Rotation2d.fromDegrees(m_gyro.getAngle()).getDegrees();
+    return Rotation2d.fromDegrees(-m_gyro.getAngle()).getDegrees();
   }
 
   /**
@@ -297,12 +309,16 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
 private void drive(ChassisSpeeds speeds, boolean fieldRelative) {
-    if (fieldRelative)
+
+  if (fieldRelative)
         speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getPose().getRotation());
-    speeds = ChassisSpeeds.discretize(speeds, 2); //LoggedRobot.defaultPeriodSecs
+    speeds = ChassisSpeeds.discretize(speeds, .02); //LoggedRobot.defaultPeriodSecs
     var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds);
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, DriveConstants.kMaxSpeedMetersPerSecond);
     setModuleStates(swerveModuleStates);
+
+    moduleStatePublisher.set(swerveModuleStates);
+    chassisSpeedPublisher.set(speeds);
 }
 
   /**
@@ -311,7 +327,7 @@ private void drive(ChassisSpeeds speeds, boolean fieldRelative) {
    * @return The turn rate of the robot, in degrees per second
    */
   public double getTurnRate() {
-    return m_gyro.getRate() * (DriveConstants.kGyroReversed ? -1.0 : 1.0);
+    return -m_gyro.getRate() * (DriveConstants.kGyroReversed ? -1.0 : 1.0);
   }
 
 

@@ -43,7 +43,10 @@ public class RobotContainer {
                 new MoveElevatorToPositionCommand(m_elevator, -1).alongWith(
                         new MoveArmToRotationCommand(m_arm, -0.021)));
         NamedCommands.registerCommand("ReHome",
-                new MoveElevatorToPositionCommand(m_elevator, 0).andThen(
+                new MoveElevatorToPositionCommand(m_elevator, 0).alongWith(
+                        new MoveArmToRotationCommand(m_arm, 0)));
+        NamedCommands.registerCommand("Yoink",
+                new MoveElevatorToPositionCommand(m_elevator, 0.5).alongWith(
                         new MoveArmToRotationCommand(m_arm, 0)));
 
         configureButtonBindings();
@@ -55,9 +58,9 @@ public class RobotContainer {
                 // Turning is controlled by the X axis of the right stick.
                 new RunCommand(
                         () -> m_robotDrive.drive(
-                                -MathUtil.applyDeadband(m_driverController.getLeftY(), 0.25),
-                                -MathUtil.applyDeadband(m_driverController.getLeftX(), 0.25),
-                                -MathUtil.applyDeadband(m_driverController.getRightX(), 0.25),
+                                -MathUtil.applyDeadband(m_driverController.getLeftY(), 0.15),
+                                -MathUtil.applyDeadband(m_driverController.getLeftX(), 0.15),
+                                -MathUtil.applyDeadband(m_driverController.getRightX(), 0.15),
                                 true),
                         m_robotDrive));
 
@@ -83,10 +86,12 @@ public class RobotContainer {
      * {@link JoystickButton}.
      */
     private void configureButtonBindings() {
-        new JoystickButton(m_driverController, Button.kL1.value)
+        new JoystickButton(m_driverController, Button.kR1.value)
                 .whileTrue(new RunCommand(
                         () -> m_robotDrive.setX(),
                         m_robotDrive));
+        new JoystickButton(m_driverController, Button.kL1.value)
+                        .whileTrue(new RunCommand(() -> m_robotDrive.zeroHeading()));
 
         // L4
         m_operatorController.x().whileTrue(
@@ -140,5 +145,8 @@ public class RobotContainer {
         // that you want here
         // Return the autonomous command
         return autoChooser.getSelected();
+    }
+    public void resetGyro(double angle) {
+        m_robotDrive.setGyro(angle);
     }
 }

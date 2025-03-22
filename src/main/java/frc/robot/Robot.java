@@ -67,7 +67,7 @@ public class Robot extends TimedRobot {
     
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
-    
+    m_robotContainer.resetGyro(180);
     /*
      * String autoSelected = SmartDashboard.getString("Auto Selector",
      * "Default"); switch(autoSelected) { case "My Auto": autonomousCommand
