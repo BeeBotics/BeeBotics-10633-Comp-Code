@@ -34,6 +34,49 @@
           "data": {
             "pathName": "L Coral 1 To Station"
           }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 1.0
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Yoink"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ReHome"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "L Coral Station to Reef"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Place L4"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ReHome"
+          }
         }
       ]
     }

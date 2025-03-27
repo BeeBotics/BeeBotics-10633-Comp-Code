@@ -28,6 +28,100 @@
           "data": {
             "name": "ReHome"
           }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Middle Right Algae Prep"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Place L4"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Middle Right Algae Bump"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Middle Right Algae Reverse"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "ReHome"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Middle Left Agae Prep"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Middle Left Algae Bump"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Place L4"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Middle Left Algae Reverse"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "ReHome"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Middle Prep For Coral Intake"
+          }
         }
       ]
     }

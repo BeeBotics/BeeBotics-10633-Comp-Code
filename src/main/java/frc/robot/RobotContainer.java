@@ -63,6 +63,7 @@ public class RobotContainer {
                                 -MathUtil.applyDeadband(m_driverController.getRightX(), 0.15),
                                 true),
                         m_robotDrive));
+                
 
         autoChooser = AutoBuilder.buildAutoChooser();
         SmartDashboard.putData("Auto Chooser", autoChooser);
@@ -93,6 +94,8 @@ public class RobotContainer {
         new JoystickButton(m_driverController, Button.kL1.value)
                         .whileTrue(new RunCommand(() -> m_robotDrive.zeroHeading()));
 
+        new JoystickButton(m_driverController, Button.kCircle.value).whileTrue(
+                new RunCommand(() -> m_robotDrive.driveToPositionCommand(null, null)));                
         // L4
         m_operatorController.x().whileTrue(
                 new MoveElevatorToPositionCommand(m_elevator, -1).alongWith(
@@ -114,13 +117,19 @@ public class RobotContainer {
                 .whileFalse(
                         new MoveElevatorToPositionCommand(m_elevator, 0).alongWith(
                                 new MoveArmToRotationCommand(m_arm, 0)));
-        // L1
+        // L3
         m_operatorController.rightTrigger().whileTrue(
                 new MoveArmToRotationCommand(m_arm, -0.015).andThen(
                         new MoveElevatorToPositionCommand(m_elevator, 0.3)))
                 .whileFalse(
                         new MoveElevatorToPositionCommand(m_elevator, 0).alongWith(
                                 new MoveArmToRotationCommand(m_arm, 0)));
+        // L1
+        m_operatorController.rightBumper().whileTrue(
+                new MoveArmToRotationCommand(m_arm, -0.0115).andThen(
+                        new MoveElevatorToPositionCommand(m_elevator, 0.295)))
+                .whileFalse(new MoveArmToRotationCommand(m_arm, 0)
+                       .alongWith(new MoveElevatorToPositionCommand(m_elevator, 0)));
         // Yoink
         m_operatorController.a().whileTrue(
                 new MoveElevatorToPositionCommand(m_elevator, 0.6).alongWith(
@@ -129,9 +138,11 @@ public class RobotContainer {
                         new MoveElevatorToPositionCommand(m_elevator, 0).alongWith(
                                 new MoveArmToRotationCommand(m_arm, 0)));
         // Reset Arm
-        m_operatorController.rightBumper().whileTrue(
+        m_operatorController.leftBumper().whileTrue(
                 new MoveArmToRotationCommand(m_arm, 0.005)).whileFalse(
                         new InstantCommand(() -> m_arm.resetRotation()));
+        
+
 
     }
 

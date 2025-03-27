@@ -3,13 +3,20 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot.subsystems;
+
 //package frc.robot.subsystems.swervedrive;
 //import org.littletonrobotics.junction.LoggedRobot;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+import edu.wpi.first.math.geometry.CoordinateSystem;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -17,31 +24,40 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
+
 import com.pathplanner.lib.config.RobotConfig;
 import frc.robot.Constants;
+import frc.robot.LimelightHelpers;
+
 import java.io.File;
+import java.util.List;
+import java.util.function.BooleanSupplier;
+
 import static edu.wpi.first.units.Units.Meter;
 
 import com.ctre.phoenix6.swerve.jni.SwerveJNI.ModuleState;
-//import com.ctre.phoenix6.swerve.SimSwerveDrivetrain.SimSwerveModule;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.GoalEndState;
+import com.pathplanner.lib.path.IdealStartingState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.path.Waypoint;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
-
 
 import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
@@ -55,7 +71,6 @@ import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-
 public class DriveSubsystem extends SubsystemBase {
 
   SwerveDrive swerveDrive;
@@ -67,6 +82,8 @@ public class DriveSubsystem extends SubsystemBase {
   private final StructPublisher<Pose2d> publishRobotPose;
   private final StructArrayPublisher<SwerveModuleState> moduleStatePublisher;
   private final StructPublisher<ChassisSpeeds> chassisSpeedPublisher;
+  private final DoublePublisher gyroPublisher;
+  private final StructPublisher<Pose2d> megaTag1Publisher;
 
   // Create MAXSwerveModules
   private final MAXSwerveModule m_frontLeft = new MAXSwerveModule(
@@ -90,8 +107,9 @@ public class DriveSubsystem extends SubsystemBase {
       DriveConstants.kBackRightChassisAngularOffset);
 
   // The gyro sensor
-   private final AHRS m_gyro = new AHRS(NavXComType.kMXP_SPI);
+  private final AHRS m_gyro = new AHRS(NavXComType.kMXP_SPI);
 
+  private final SwerveDrivePoseEstimator m_poseEstimator;
   // Odometry class for tracking robot pose
   SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(
       DriveConstants.kDriveKinematics,
@@ -102,49 +120,153 @@ public class DriveSubsystem extends SubsystemBase {
           m_rearLeft.getPosition(),
           m_rearRight.getPosition()
       });
+  // Basic targeting data
+  double tx = LimelightHelpers.getTX(""); // Horizontal offset from crosshair to target in degrees
+  double ty = LimelightHelpers.getTY(""); // Vertical offset from crosshair to target in degrees
+  double ta = LimelightHelpers.getTA(""); // Target area (0% to 100% of image)
+  boolean hasTarget = LimelightHelpers.getTV(""); // Do you have a valid target?
+
+  double txnc = LimelightHelpers.getTXNC(""); // Horizontal offset from principal pixel/point to target in degrees
+  double tync = LimelightHelpers.getTYNC(""); // Vertical offset from principal pixel/point to target in degrees
+
+  private double gyro;
+
+  private Pose3d tagInRobotFrame;
+
+  private Pose3d leftTargetBranchPose;
+  private Pose3d rightTargetBranchPose;
 
   /** Creates a new DriveSubsystem. */
   public DriveSubsystem() {
-   setupPathPlanner(); //Call your AutoBuilder configuration here.
-   // Usage reporting for MAXSwerve template
+    setupPathPlanner(); // Call your AutoBuilder configuration here.
+    // Usage reporting for MAXSwerve template
     HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_MaxSwerve);
-    modules = new SimSwerveModule[]{
-      new SimSwerveModule(),
-      new SimSwerveModule(),
-      new SimSwerveModule(),
-      new SimSwerveModule()
+    modules = new SimSwerveModule[] {
+        new SimSwerveModule(),
+        new SimSwerveModule(),
+        new SimSwerveModule(),
+        new SimSwerveModule()
     };
 
     kinematics = Constants.DriveConstants.kDriveKinematics;
     // kinematics = new SwerveDriveKinematics(
-    //   Constants.Swerve.flModuleOffset, 
-    //   Constants.Swerve.frModuleOffset, 
-    //   Constants.Swerve.blModuleOffset, 
-    //   Constants.Swerve.brModuleOffset
+    // Constants.Swerve.flModuleOffset,
+    // Constants.Swerve.frModuleOffset,
+    // Constants.Swerve.blModuleOffset,
+    // Constants.Swerve.brModuleOffset
     // );
     publishRobotPose = TableOut.getStructTopic("RobotPose", Pose2d.struct).publish();
     moduleStatePublisher = TableOut.getStructArrayTopic("Module States", SwerveModuleState.struct).publish();
     chassisSpeedPublisher = TableOut.getStructTopic("Chassis Speeds", ChassisSpeeds.struct).publish();
+    gyroPublisher = TableOut.getDoubleTopic("Gyro").publish();
+    megaTag1Publisher = TableOut.getStructTopic("MegaTag1", Pose2d.struct).publish();
+
+
+    m_poseEstimator = new SwerveDrivePoseEstimator(
+        DriveConstants.kDriveKinematics,
+        m_gyro.getRotation2d(),
+        new SwerveModulePosition[] {
+            m_frontLeft.getPosition(),
+            m_frontRight.getPosition(),
+            m_rearLeft.getPosition(),
+            m_rearRight.getPosition()
+        },
+        Pose2d.kZero,
+        VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5)),
+        VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(30)));
+
   }
 
   @Override
   public void periodic() {
-    // Update the odometry in the periodic block
+    gyro = -m_gyro.getAngle();
+
+    // Update the odometry in the periodic
     m_odometry.update(
-        Rotation2d.fromDegrees(-m_gyro.getAngle()),
+        Rotation2d.fromDegrees(gyro),
         new SwerveModulePosition[] {
             m_frontLeft.getPosition(),
             m_frontRight.getPosition(),
             m_rearLeft.getPosition(),
             m_rearRight.getPosition()
         });
-        
-        publishRobotPose.set(getPose());
 
+    m_poseEstimator.update(
+        Rotation2d.fromDegrees(gyro),
+        new SwerveModulePosition[] {
+            m_frontLeft.getPosition(),
+            m_frontRight.getPosition(),
+            m_rearLeft.getPosition(),
+            m_rearRight.getPosition()
+        });
+
+    // double robotYaw = m_gyro.getYaw();
+    LimelightHelpers.PoseEstimate limelightMeasurementMT1;
+    // // Get the pose estimate
+    if (isBlueAlliance().getAsBoolean()) {
+      limelightMeasurementMT1 = LimelightHelpers.getBotPoseEstimate_wpiBlue("");
+    } else {
+      limelightMeasurementMT1 = LimelightHelpers.getBotPoseEstimate_wpiRed("");
+    }
+
+
+    publishRobotPose.set(getPose());
+    gyroPublisher.set(gyro);
+    megaTag1Publisher.set(limelightMeasurementMT1.pose);
+
+    if(LimelightHelpers.getTV("")) {
+    var limelight3D = LimelightHelpers.getTargetPose3d_RobotSpace("");
+    System.out.print("Pose= " + limelight3D.getX() + ", " + limelight3D.getY() + ", " + limelight3D.getZ()); 
+    // // The X is the side to side distance from the tag, the Z is the forward and backward
+    // System.out.println(" Dist= " + limelightMeasurementMT1.rawFiducials[0].distToRobot);
+    if(limelight3D.getZ() <= 1.7) {
+      tagInRobotFrame = CoordinateSystem.convert(limelight3D, CoordinateSystem.EDN(), CoordinateSystem.NWU());
+      leftTargetBranchPose = CoordinateSystem.convert(new Pose3d(0.16, -0.3, 0.62, Rotation3d.kZero), CoordinateSystem.EDN(), CoordinateSystem.NWU());
+      // // Add it to your pose estimator
+      System.out.print(" Tag Converted= " + tagInRobotFrame);
+      System.out.println(" left Target Branch Converted= " + leftTargetBranchPose);
+      m_poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.5, .5, 9999999));
+      m_poseEstimator.addVisionMeasurement(
+          limelightMeasurementMT1.pose,
+          limelightMeasurementMT1.timestampSeconds);
+      }
+    }
+      // z = 0.62  x = 0.16 target pose in robot space y = -0.3
   }
+  public static Command driveToPositionCommand(Pose2d targetPose, Pose2d currentPose) {
+    
+    // Create a list of two waypoints representing the path to follow,
+    // from the current pose to the target pose
+    List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(
+                                new Pose2d(currentPose.getTranslation(), currentPose.getRotation()),
+                                new Pose2d(targetPose.getTranslation(), targetPose.getRotation()));
+        
+    // Create the constraints of the path to be followed
+    PathConstraints constraints = new PathConstraints(1.0, 1.0, Units.degreesToRadians(360), Units.degreesToRadians(360));
+         
+    // Calculate the robot's current velocity and rotation to set as the ideal starting state of the path
+    // double vxMetersPerSecond = getState().Speeds.vxMetersPerSecond;
+    // double vyMetersPerSecond = getState().Speeds.vyMetersPerSecond;
+    // double velocity = Math.sqrt(vxMetersPerSecond * vxMetersPerSecond + vyMetersPerSecond * vyMetersPerSecond);
+    // Rotation2d rotation = getPose().getRotation();
+    // IdealStartingState idealStartingState = new IdealStartingState(velocity, rotation);
+    IdealStartingState idealStartingState = new IdealStartingState(0, Rotation2d.kZero);
+    // Create the new path using the waypoints
+    PathPlannerPath path = new PathPlannerPath(
+                                waypoints,
+                                constraints,
+                                idealStartingState, // set this to null if not working
+                                new GoalEndState(0.0, targetPose.getRotation()));
+    path.preventFlipping = true;
+
+    // Create the path following command
+    return AutoBuilder.followPath(path);
+}
+
   public void setGyro(double angle) {
     m_gyro.setAngleAdjustment(angle);
   }
+
   /**
    * Returns the currently-estimated pose of the robot.
    *
@@ -235,7 +357,7 @@ public class DriveSubsystem extends SubsystemBase {
 
   /** Zeroes the heading of the robot. */
   public void zeroHeading() {
-    m_gyro.reset(); 
+    m_gyro.reset();
   }
 
   /**
@@ -252,13 +374,11 @@ public class DriveSubsystem extends SubsystemBase {
    *
    * @return A ChassisSpeeds object of the current field-relative velocity
    */
-  
-  public ChassisSpeeds getFieldVelocity()
-  {
+
+  public ChassisSpeeds getFieldVelocity() {
     return swerveDrive.getFieldVelocity();
   }
 
- 
   public void setStates(SwerveModuleState[] targetStates) {
     SwerveDriveKinematics.desaturateWheelSpeeds(targetStates, Constants.Swerve.maxModuleSpeed);
 
@@ -282,7 +402,8 @@ public class DriveSubsystem extends SubsystemBase {
     public void setTargetState(SwerveModuleState targetState) {
       currentState = SwerveModuleState.optimize(targetState, currentState.angle);
 
-      currentPosition = new SwerveModulePosition(currentPosition.distanceMeters + (currentState.speedMetersPerSecond * 0.02), currentState.angle);
+      currentPosition = new SwerveModulePosition(
+          currentPosition.distanceMeters + (currentState.speedMetersPerSecond * 0.02), currentState.angle);
     }
   }
 
@@ -291,35 +412,34 @@ public class DriveSubsystem extends SubsystemBase {
    *
    * @return A {@link ChassisSpeeds} object of the current velocity
    */
-  
-  public ChassisSpeeds getRobotVelocity()
-  {
+
+  public ChassisSpeeds getRobotVelocity() {
     return swerveDrive.getRobotVelocity();
   }
 
-  public ChassisSpeeds getRobotRelativeSpeeds(){
+  public ChassisSpeeds getRobotRelativeSpeeds() {
     return Constants.DriveConstants.kDriveKinematics.toChassisSpeeds(m_frontLeft.getState(),
-                                                      m_frontRight.getState(),
-                                                      m_rearLeft.getState(),
-                                                      m_rearRight.getState());
+        m_frontRight.getState(),
+        m_rearLeft.getState(),
+        m_rearRight.getState());
   }
 
-  private void driveRobotRelative(ChassisSpeeds speeds){
+  private void driveRobotRelative(ChassisSpeeds speeds) {
     drive(speeds, false);
   }
 
-private void drive(ChassisSpeeds speeds, boolean fieldRelative) {
+  private void drive(ChassisSpeeds speeds, boolean fieldRelative) {
 
-  if (fieldRelative)
-        speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getPose().getRotation());
-    speeds = ChassisSpeeds.discretize(speeds, .02); //LoggedRobot.defaultPeriodSecs
+    if (fieldRelative)
+      speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getPose().getRotation());
+    speeds = ChassisSpeeds.discretize(speeds, .02); // LoggedRobot.defaultPeriodSecs
     var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds);
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, DriveConstants.kMaxSpeedMetersPerSecond);
     setModuleStates(swerveModuleStates);
 
     moduleStatePublisher.set(swerveModuleStates);
     chassisSpeedPublisher.set(speeds);
-}
+  }
 
   /**
    * Returns the turn rate of the robot.
@@ -330,72 +450,84 @@ private void drive(ChassisSpeeds speeds, boolean fieldRelative) {
     return -m_gyro.getRate() * (DriveConstants.kGyroReversed ? -1.0 : 1.0);
   }
 
-
-   public void setupPathPlanner()
-  {
+  public void setupPathPlanner() {
 
     RobotConfig config;
-    try
-    {
-      config = RobotConfig.fromGUISettings(); //needs to be in a try/catch
-      
+    try {
+      config = RobotConfig.fromGUISettings(); // needs to be in a try/catch
+
       final boolean enableFeedforward = true;
-      
-      // Configure AutoBuilder last. Other sources say you can put this in your DriveSubsystem but I had errors doing that.
+
+      // Configure AutoBuilder last. Other sources say you can put this in your
+      // DriveSubsystem but I had errors doing that.
       AutoBuilder.configure(
           this::getPose,
           this::resetOdometry,
-          this::getRobotRelativeSpeeds, 
-            (speeds, feedforwards) -> driveRobotRelative(speeds),
-            new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
-                    new PIDConstants(0.04, 0.0, 0.0), // Translation PID constants
-                    new PIDConstants(1.0, 0.0, 0.0) // Rotation PID constants    (i usually match these to teleop driving constants.)
-            ),
+          this::getRobotRelativeSpeeds,
+          (speeds, feedforwards) -> driveRobotRelative(speeds),
+          new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for
+                                          // holonomic drive trains
+              new PIDConstants(0.04, 0.0, 0.0), // Translation PID constants
+              new PIDConstants(1.0, 0.0, 0.0) // Rotation PID constants (i usually match these to teleop driving
+                                              // constants.)
+          ),
           config,
-          () -> {
-            // Boolean supplier that controls when the path will be mirrored for the red alliance
-            // This will flip the path being followed to the red side of the field.
-            // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+          // () -> {
+          // // Boolean supplier that controls when the path will be mirrored for the red
+          // // alliance
+          // // This will flip the path being followed to the red side of the field.
+          // // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
 
-            var alliance = DriverStation.getAlliance();
-            if (alliance.isPresent())
-            {
-              return alliance.get() == DriverStation.Alliance.Blue;
-            }
-            return false;
-          },
+          // var alliance = DriverStation.getAlliance();
+          // if (alliance.isPresent()) {
+          // return alliance.get() == DriverStation.Alliance.Blue;
+          // }
+          // return false;
+          // },
+          isBlueAlliance(),
           this
-          // Reference to this subsystem to set requirements
-                           );
+      // Reference to this subsystem to set requirements
+      );
 
-    } catch (Exception e)
-    {
+    } catch (Exception e) {
       e.printStackTrace();
     }
-   
-    //Uncomment this if you want to monitor the configuration confirmation.
-    //System.out.println(AutoBuilder.isConfigured());
-    
-  
+
+    // Uncomment this if you want to monitor the configuration confirmation.
+    // System.out.println(AutoBuilder.isConfigured());
+
+  }
+
+  public BooleanSupplier isBlueAlliance() {
+    return () -> {
+      // Boolean supplier that controls when the path will be mirrored for the red
+      // alliance
+      // This will flip the path being followed to the red side of the field.
+      // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+      var alliance = DriverStation.getAlliance();
+      if (alliance.isPresent()) {
+        return alliance.get() == DriverStation.Alliance.Blue;
+      }
+      return false;
+    };
   }
 
   public Command getAutonomousCommand(String pathName) {
-    	return new PathPlannerAuto(pathName);
+    return new PathPlannerAuto(pathName);
   }
- 
-  public Command driveToPose(Pose2d pose)
-  {
 
-	PathConstraints constraints = new PathConstraints(
-        2.8, 2.8,  			//these two are different instances of max speeds, you can make them the same. 
-        2 * Math.PI, 2 * Math.PI);	//same for these two angular speeds
+  public Command driveToPose(Pose2d pose) {
 
-	// Since AutoBuilder is configured, we can use it to build pathfinding commands
-    	return AutoBuilder.pathfindToPose(
+    PathConstraints constraints = new PathConstraints(
+        2.8, 2.8, // these two are different instances of max speeds, you can make them the same.
+        2 * Math.PI, 2 * Math.PI); // same for these two angular speeds
+
+    // Since AutoBuilder is configured, we can use it to build pathfinding commands
+    return AutoBuilder.pathfindToPose(
         pose,
         constraints,
         edu.wpi.first.units.Units.MetersPerSecond.of(0) // Goal end velocity in meters/sec
-                                     );
+    );
   }
-
 }
