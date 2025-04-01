@@ -9,29 +9,29 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class elevator extends SubsystemBase {
+public class Climb extends SubsystemBase {
     private final SparkMax motor;          
     private final RelativeEncoder encoder;  
     private final PIDController pid;        
     
     private final double COUNTS_PER_INCH = 42; 
     
-    public elevator() { 
-        motor = new SparkMax(10, MotorType.kBrushless);
+    public Climb () { 
+        motor = new SparkMax(20, MotorType.kBrushless);
         encoder = motor.getEncoder();
  
-        pid = new PIDController(4, 0, 0.4);
+        pid = new PIDController(3, 0, 0);
     }
 
     // Returns elevator height
-    public double getHeight() {
+    public double getRotation() {
         return encoder.getPosition() / COUNTS_PER_INCH;
     }
     public void resetEncoder() {
         encoder.setPosition(0);
     }
 
-    public void setPosition(double targetHeight) {
+    public void setRotation(double targetHeight) {
         pid.setSetpoint(targetHeight);
     }
 
@@ -39,10 +39,9 @@ public class elevator extends SubsystemBase {
     public void periodic() {
         // This method will be called once per scheduler run
         // Good place to update SmartDashboard values if needed
-        double pidOutput = pid.calculate(getHeight());
+        double pidOutput = pid.calculate(getRotation());
         motor.set(pidOutput);
-        SmartDashboard.putNumber("Position", getHeight());
-        // SmartDashboard.putNumber("Voltage", pidOutput);
-        
+        SmartDashboard.putNumber("Climb Rotation", getRotation());
+
      }
 }

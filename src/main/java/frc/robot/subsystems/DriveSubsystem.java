@@ -201,39 +201,70 @@ public class DriveSubsystem extends SubsystemBase {
         });
 
     // double robotYaw = m_gyro.getYaw();
-    LimelightHelpers.PoseEstimate limelightMeasurementMT1;
-    // // Get the pose estimate
-    if (isBlueAlliance().getAsBoolean()) {
-      limelightMeasurementMT1 = LimelightHelpers.getBotPoseEstimate_wpiBlue("");
-    } else {
-      limelightMeasurementMT1 = LimelightHelpers.getBotPoseEstimate_wpiRed("");
-    }
+    // LimelightHelpers.PoseEstimate limelightMeasurementMT1;
+    // // // Get the pose estimate
+    // if (isBlueAlliance().getAsBoolean()) {
+    //   limelightMeasurementMT1 = LimelightHelpers.getBotPoseEstimate_wpiBlue("");
+    // } else {
+    //   limelightMeasurementMT1 = LimelightHelpers.getBotPoseEstimate_wpiRed("");
+    // }
 
 
-    publishRobotPose.set(getPose());
-    gyroPublisher.set(gyro);
-    megaTag1Publisher.set(limelightMeasurementMT1.pose);
+    // publishRobotPose.set(getPose());
+    // gyroPublisher.set(gyro);
+    // megaTag1Publisher.set(limelightMeasurementMT1.pose);
+    
 
-    if(LimelightHelpers.getTV("")) {
-    var limelight3D = LimelightHelpers.getTargetPose3d_RobotSpace("");
-    System.out.print("Pose= " + limelight3D.getX() + ", " + limelight3D.getY() + ", " + limelight3D.getZ()); 
-    // // The X is the side to side distance from the tag, the Z is the forward and backward
-    // System.out.println(" Dist= " + limelightMeasurementMT1.rawFiducials[0].distToRobot);
-    if(limelight3D.getZ() <= 1.7) {
-      tagInRobotFrame = CoordinateSystem.convert(limelight3D, CoordinateSystem.EDN(), CoordinateSystem.NWU());
-      leftTargetBranchPose = CoordinateSystem.convert(new Pose3d(0.16, -0.3, 0.62, Rotation3d.kZero), CoordinateSystem.EDN(), CoordinateSystem.NWU());
-      // // Add it to your pose estimator
-      System.out.print(" Tag Converted= " + tagInRobotFrame);
-      System.out.println(" left Target Branch Converted= " + leftTargetBranchPose);
-      m_poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.5, .5, 9999999));
-      m_poseEstimator.addVisionMeasurement(
-          limelightMeasurementMT1.pose,
-          limelightMeasurementMT1.timestampSeconds);
-      }
-    }
-      // z = 0.62  x = 0.16 target pose in robot space y = -0.3
+  //   if(LimelightHelpers.getTV("")) {
+  //   var tagInRobotFrameEDN = LimelightHelpers.getTargetPose3d_RobotSpace("");
+  //  // System.out.print("Pose= " + tagInRobotFrameEDN.getX() + ", " + tagInRobotFrameEDN.getY() + ", " + tagInRobotFrameEDN.getZ()); 
+  //   // // The X is the side to side distance from the tag, the Z is the forward and backward
+  //   // System.out.println(" Dist= " + limelightMeasurementMT1.rawFiducials[0].distToRobot);
+  //   if(tagInRobotFrameEDN.getZ() <= 1.5) {
+  //     tagInRobotFrame = CoordinateSystem.convert(tagInRobotFrameEDN, CoordinateSystem.EDN(), CoordinateSystem.NWU());
+  //     tagInRobotFrame = new Pose3d(tagInRobotFrame.getTranslation(), new Rotation3d(
+  //       - tagInRobotFrame.getRotation().getY(),
+  //       Math.PI/2. + tagInRobotFrame.getRotation().getX(),
+  //       Math.PI/2. - tagInRobotFrame.getRotation().getZ() > 0. ? 
+  //         Math.PI + Math.PI/2. - tagInRobotFrame.getRotation().getZ() : 
+  //         - tagInRobotFrame.getRotation().getZ()));
+  //     leftTargetBranchPose = CoordinateSystem.convert(new Pose3d(0.16, -0.3, 0.62, Rotation3d.kZero), CoordinateSystem.EDN(), CoordinateSystem.NWU());
+  //     // // Add it to your pose estimator
+  //     //System.out.println(" Tag Converted= " + tagInRobotFrame);
+  //     // System.out.format(" NWU R adjust T:%.3f, %.3f, %.3f, R:%.3f, %.3f, %.3f%n%n",
+  //     // tagInRobotFrame.getTranslation().getX(),
+  //     // tagInRobotFrame.getTranslation().getY(),
+  //     // tagInRobotFrame.getTranslation().getZ(),
+  //     // Units.radiansToDegrees(tagInRobotFrame.getRotation().getX()), 
+  //     // Units.radiansToDegrees(tagInRobotFrame.getRotation().getY()), 
+  //     // Units.radiansToDegrees(tagInRobotFrame.getRotation().getZ())); 
+  //    // System.out.println(" left Target Branch Converted= " + leftTargetBranchPose);
+
+  //     if (DriverStation.isAutonomousEnabled()) {
+  //       // System.out.println("Auto Add Vision");
+  //       m_poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.5, .5, 9999999));
+  //       m_poseEstimator.addVisionMeasurement(
+  //           limelightMeasurementMT1.pose,
+  //           limelightMeasurementMT1.timestampSeconds);
+  //     }
+  //     if (DriverStation.isTeleopEnabled()) {
+  //       //resetOdometry(tagInRobotFrame.toPose2d());
+  //     }
+
+  //     }
+      
+    // }
+    // x = 0.62, y = -0.144 z = 0.302 Left reef post
   }
-  public static Command driveToPositionCommand(Pose2d targetPose, Pose2d currentPose) {
+  public Pose2d getLeftBranchPose() {
+    return new Pose2d(0.62, -0.144, new Rotation2d());
+  }
+  public Pose2d getCurrentPose() {
+    return new Pose2d(tagInRobotFrame.getTranslation().getX(), 
+        tagInRobotFrame.getTranslation().getY(), 
+        new Rotation2d(tagInRobotFrame.getRotation().getZ()));
+  }
+  public Command driveToPositionCommand(Pose2d targetPose, Pose2d currentPose) {
     
     // Create a list of two waypoints representing the path to follow,
     // from the current pose to the target pose
@@ -242,8 +273,9 @@ public class DriveSubsystem extends SubsystemBase {
                                 new Pose2d(targetPose.getTranslation(), targetPose.getRotation()));
         
     // Create the constraints of the path to be followed
-    PathConstraints constraints = new PathConstraints(1.0, 1.0, Units.degreesToRadians(360), Units.degreesToRadians(360));
-         
+    PathConstraints constraints = new PathConstraints(
+      2.8, 2.8, // these two are different instances of max speeds, you can make them the same.
+      2 * Math.PI, 2 * Math.PI);
     // Calculate the robot's current velocity and rotation to set as the ideal starting state of the path
     // double vxMetersPerSecond = getState().Speeds.vxMetersPerSecond;
     // double vyMetersPerSecond = getState().Speeds.vyMetersPerSecond;
@@ -274,6 +306,7 @@ public class DriveSubsystem extends SubsystemBase {
    */
   public Pose2d getPose() {
     return m_odometry.getPoseMeters();
+    // return m_poseEstimator.getEstimatedPosition();
   }
 
   /**

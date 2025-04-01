@@ -8,8 +8,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.MoveArmToRotationCommand;
+import frc.robot.commands.MoveClimbToRotationCommand;
 import frc.robot.commands.MoveElevatorToPositionCommand;
 import frc.robot.subsystems.Arm;
+import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.elevator;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -27,6 +29,7 @@ public class RobotContainer {
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
     private final elevator m_elevator = new elevator();
     private final Arm m_arm = new Arm();
+    private final Climb m_climb = new Climb();
     private final SendableChooser<Command> autoChooser;
 
     // Controllers
@@ -40,8 +43,9 @@ public class RobotContainer {
         // Configure the button bindings
 
         NamedCommands.registerCommand("Place L4",
-                new MoveElevatorToPositionCommand(m_elevator, -1).alongWith(
+                new MoveElevatorToPositionCommand(m_elevator, -0.95).alongWith(
                         new MoveArmToRotationCommand(m_arm, -0.021)));
+        NamedCommands.registerCommand("Down", new MoveArmToRotationCommand(m_arm, -0.008));
         NamedCommands.registerCommand("ReHome",
                 new MoveElevatorToPositionCommand(m_elevator, 0).alongWith(
                         new MoveArmToRotationCommand(m_arm, 0)));
@@ -93,43 +97,49 @@ public class RobotContainer {
                         m_robotDrive));
         new JoystickButton(m_driverController, Button.kL1.value)
                         .whileTrue(new RunCommand(() -> m_robotDrive.zeroHeading()));
+        new JoystickButton(m_driverController, Button.kCircle.value)
+                        .whileTrue(new MoveClimbToRotationCommand(m_climb, 0.8));
+        new JoystickButton(m_driverController, Button.kSquare.value)
+                        .whileTrue(new MoveClimbToRotationCommand(m_climb, 0));
+        new JoystickButton(m_driverController, Button.kTriangle.value)
+                        .whileTrue(new MoveClimbToRotationCommand(m_climb, -0.95));
 
-        new JoystickButton(m_driverController, Button.kCircle.value).whileTrue(
-                new RunCommand(() -> m_robotDrive.driveToPositionCommand(null, null)));                
+        // new JoystickButton(m_driverController, Button.kR1.value).whileTrue(
+        //         new RunCommand(() -> m_robotDrive.driveToPositionCommand(m_robotDrive.getLeftBranchPose(), m_robotDrive.getCurrentPose())));
         // L4
         m_operatorController.x().whileTrue(
-                new MoveElevatorToPositionCommand(m_elevator, -1).alongWith(
-                        new MoveArmToRotationCommand(m_arm, -0.02))) // Changed from comp # of -0.021
+                new MoveElevatorToPositionCommand(m_elevator, -0.95).alongWith(
+                        new MoveArmToRotationCommand(m_arm, -0.021)))
                 .whileFalse(
                         new MoveElevatorToPositionCommand(m_elevator, 0).alongWith(
                                 new MoveArmToRotationCommand(m_arm, 0)));
         // L3
         m_operatorController.b().whileTrue(
                 new MoveElevatorToPositionCommand(m_elevator, -0.05).alongWith(
-                        new MoveArmToRotationCommand(m_arm, -0.0215))) // Changed from comp # of -0.022
+                        new MoveArmToRotationCommand(m_arm, -0.0215)))
                 .whileFalse(
                         new MoveArmToRotationCommand(m_arm, 0).andThen(
                                 new MoveElevatorToPositionCommand(m_elevator, 0)));
         // L2
         m_operatorController.y().whileTrue(
-                new MoveElevatorToPositionCommand(m_elevator, 0.15).alongWith(
-                        new MoveArmToRotationCommand(m_arm, -0.017))) // Changed from comp # of -0.018
+                new MoveArmToRotationCommand(m_arm, -0.017).andThen(
+                        new MoveElevatorToPositionCommand(m_elevator, 0.16)))
                 .whileFalse(
-                        new MoveElevatorToPositionCommand(m_elevator, 0).alongWith(
+                        new MoveElevatorToPositionCommand(m_elevator, 0).alongWith( 
                                 new MoveArmToRotationCommand(m_arm, 0)));
         // L3
         m_operatorController.rightTrigger().whileTrue(
-                new MoveArmToRotationCommand(m_arm, -0.015).andThen(
+                new MoveArmToRotationCommand(m_arm, -0.0155).andThen(
                         new MoveElevatorToPositionCommand(m_elevator, 0.3)))
                 .whileFalse(
-                        new MoveElevatorToPositionCommand(m_elevator, 0).alongWith(
+                        new MoveElevatorToPositionCommand(m_elevator, 0).alongWith( 
                                 new MoveArmToRotationCommand(m_arm, 0)));
         // L1
         m_operatorController.rightBumper().whileTrue(
-                new MoveArmToRotationCommand(m_arm, -0.0115).andThen(
-                        new MoveElevatorToPositionCommand(m_elevator, 0.295)))
-                .whileFalse(new MoveArmToRotationCommand(m_arm, 0)
-                       .alongWith(new MoveElevatorToPositionCommand(m_elevator, 0)));
+                new MoveArmToRotationCommand(m_arm, -0.016).andThen(
+                        new MoveElevatorToPositionCommand(m_elevator, 0.6)))
+                .whileFalse(new MoveElevatorToPositionCommand(m_elevator, 0).andThen(
+                        new MoveArmToRotationCommand(m_arm, 0)));
         // Yoink
         m_operatorController.a().whileTrue(
                 new MoveElevatorToPositionCommand(m_elevator, 0.6).alongWith(

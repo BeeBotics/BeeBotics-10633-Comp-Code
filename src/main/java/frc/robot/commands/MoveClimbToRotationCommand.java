@@ -2,29 +2,30 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Arm;
+import frc.robot.subsystems.Climb;
 
-public class MoveArmToRotationCommand extends Command {
+public class MoveClimbToRotationCommand extends Command {
 
-    private final Arm arm;
+    private final Climb m_climb;
     private final double position;
          
-    public MoveArmToRotationCommand(Arm m_arm, double _position) {
-        arm = m_arm;
+    public MoveClimbToRotationCommand(Climb climb, double _position) {
+        m_climb = climb;
         position = _position;
 
-        addRequirements(arm);
+        addRequirements(climb);
     }
         
 
     @Override
     public void initialize() {
-        arm.setRotation(position);
+        m_climb.setRotation(position);
     }
 
     @Override
     public boolean isFinished() {
         // End the command when the elevator reaches the desired position
-        return Math.abs(arm.getRotation() - position) < 0.05;
+        return Math.abs(m_climb.getRotation() - position) < 0.003;
     }
 }
 
