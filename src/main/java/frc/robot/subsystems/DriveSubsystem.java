@@ -30,7 +30,6 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
 
 import com.pathplanner.lib.config.RobotConfig;
 import frc.robot.Constants;
@@ -130,9 +129,6 @@ public class DriveSubsystem extends SubsystemBase {
 
   private Pose3d tagInRobotFrame;
 
-  private Pose3d leftTargetBranchPose;
-  private Pose3d rightTargetBranchPose;
-
   /** Creates a new DriveSubsystem. */
   public DriveSubsystem() {
     setupPathPlanner(); // Call your AutoBuilder configuration here.
@@ -220,97 +216,11 @@ public class DriveSubsystem extends SubsystemBase {
           }
 
 
-  //   // Get the pose estimate
-  //   if (isBlueAlliance().getAsBoolean()) {
-  //     limelightMeasurementMT1 = LimelightHelpers.getBotPoseEstimate_wpiBlue("");
-  //   } else {
-  //     limelightMeasurementMT1 = LimelightHelpers.getBotPoseEstimate_wpiRed("");
-  //   }
-
-
     publishRobotPose.set(getPose());
   //   gyroPublisher.set(gyro);
     megaTag1Publisher.set(limelightMeasurementMT1.pose);
     
-
-    // if(LimelightHelpers.getTV("")) {
-
-  //  // System.out.print("Pose= " + tagInRobotFrameEDN.getX() + ", " + tagInRobotFrameEDN.getY() + ", " + tagInRobotFrameEDN.getZ()); 
-  //   // // The X is the side to side distance from the tag, the Z is the forward and backward
-  //   // System.out.println(" Dist= " + limelightMeasurementMT1.rawFiducials[0].distToRobot);
-  //   if(tagInRobotFrameEDN.getZ() <= 1.5) {
-  //     tagInRobotFrame = CoordinateSystem.convert(tagInRobotFrameEDN, CoordinateSystem.EDN(), CoordinateSystem.NWU());
-  //     tagInRobotFrame = new Pose3d(tagInRobotFrame.getTranslation(), new Rotation3d(
-  //       - tagInRobotFrame.getRotation().getY(),
-  //       Math.PI/2. + tagInRobotFrame.getRotation().getX(),
-  //       Math.PI/2. - tagInRobotFrame.getRotation().getZ() > 0. ? 
-  //         Math.PI + Math.PI/2. - tagInRobotFrame.getRotation().getZ() : 
-  //         - tagInRobotFrame.getRotation().getZ()));
-  //     leftTargetBranchPose = CoordinateSystem.convert(new Pose3d(0.16, -0.3, 0.62, Rotation3d.kZero), CoordinateSystem.EDN(), CoordinateSystem.NWU());
-  //     // // Add it to your pose estimator
-  //     //System.out.println(" Tag Converted= " + tagInRobotFrame);
-  //     // System.out.format(" NWU R adjust T:%.3f, %.3f, %.3f, R:%.3f, %.3f, %.3f%n%n",
-  //     // tagInRobotFrame.getTranslation().getX(),
-  //     // tagInRobotFrame.getTranslation().getY(),
-  //     // tagInRobotFrame.getTranslation().getZ(),
-  //     // Units.radiansToDegrees(tagInRobotFrame.getRotation().getX()), 
-  //     // Units.radiansToDegrees(tagInRobotFrame.getRotation().getY()), 
-  //     // Units.radiansToDegrees(tagInRobotFrame.getRotation().getZ())); 
-  //    // System.out.println(" left Target Branch Converted= " + leftTargetBranchPose);
-
-  //     if (DriverStation.isAutonomousEnabled()) {
-  //       // System.out.println("Auto Add Vision");
-  //       
-  //     }
-  //     if (DriverStation.isTeleopEnabled()) {
-  //       resetOdometry(tagInRobotFrame.toPose2d());
-  //     }
-
-  //     }
-      
-    // }
-    // x = 0.62, y = -0.144 z = 0.302 Left reef post
   }
-  public Pose2d getLeftBranchPose() {
-    return new Pose2d(0.62, -0.144, new Rotation2d());
-  }
-  public Pose2d getCurrentPose() {
-    return new Pose2d(tagInRobotFrame.getTranslation().getX(), 
-        tagInRobotFrame.getTranslation().getY(), 
-        new Rotation2d(tagInRobotFrame.getRotation().getZ()));
-  }
-  public Command driveToPositionCommand(Pose2d targetPose, Pose2d currentPose) {
-    
-    // Create a list of two waypoints representing the path to follow,
-    // from the current pose to the target pose
-    List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(
-                                new Pose2d(currentPose.getTranslation(), currentPose.getRotation()),
-                                new Pose2d(targetPose.getTranslation(), targetPose.getRotation()));
-        
-    // Create the constraints of the path to be followed
-    PathConstraints constraints = new PathConstraints(
-      3.8, 3.8, // these two are different instances of max speeds, you can make them the same.
-      2 * Math.PI, 2 * Math.PI);
-    // Calculate the robot's current velocity and rotation to set as the ideal starting state of the path
-    // double vxMetersPerSecond = getState().Speeds.vxMetersPerSecond;
-    // double vyMetersPerSecond = getState().Speeds.vyMetersPerSecond;
-    // double velocity = Math.sqrt(vxMetersPerSecond * vxMetersPerSecond + vyMetersPerSecond * vyMetersPerSecond);
-    // Rotation2d rotation = getPose().getRotation();
-    // IdealStartingState idealStartingState = new IdealStartingState(velocity, rotation);
-    IdealStartingState idealStartingState = new IdealStartingState(0, Rotation2d.kZero);
-    // Create the new path using the waypoints
-    PathPlannerPath path = new PathPlannerPath(
-        waypoints,
-        constraints,
-        null,
-        new GoalEndState(0.0, Rotation2d.fromDegrees(-90)));
-                                
-    path.preventFlipping = true;
-
-    // Create the path following command
-    return AutoBuilder.followPath(path);
-    //return AutoBuilder.pathfindThenFollowPath(path, constraints);
-}
 
   public void setGyro(double angle) {
     m_gyro.setAngleAdjustment(angle);
