@@ -3,10 +3,12 @@
   "robotLength": 0.838,
   "holonomicMode": true,
   "pathFolders": [
+    "Fast Right Paths",
     "Left",
     "Mid",
-    "Test Paths",
-    "Right"
+    "Fast Left",
+    "Right 2.5 Coral",
+    "Test Paths"
   ],
   "autoFolders": [
     "2025 comp",

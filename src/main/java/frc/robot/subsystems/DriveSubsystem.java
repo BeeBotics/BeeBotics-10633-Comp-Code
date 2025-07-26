@@ -34,7 +34,6 @@ import edu.wpi.first.wpilibj.Timer;
 
 import com.pathplanner.lib.config.RobotConfig;
 import frc.robot.Constants;
-import frc.robot.LimelightHelpers;
 
 import java.io.File;
 import java.util.List;
@@ -129,8 +128,6 @@ public class DriveSubsystem extends SubsystemBase {
   double txnc = LimelightHelpers.getTXNC(""); // Horizontal offset from principal pixel/point to target in degrees
   double tync = LimelightHelpers.getTYNC(""); // Vertical offset from principal pixel/point to target in degrees
 
-  private double gyro;
-
   private Pose3d tagInRobotFrame;
 
   private Pose3d leftTargetBranchPose;
@@ -179,11 +176,10 @@ public class DriveSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-    gyro = -m_gyro.getAngle();
 
     // Update the odometry in the periodic
     m_odometry.update(
-        Rotation2d.fromDegrees(gyro),
+        Rotation2d.fromDegrees(-m_gyro.getAngle()),
         new SwerveModulePosition[] {
             m_frontLeft.getPosition(),
             m_frontRight.getPosition(),
@@ -192,7 +188,7 @@ public class DriveSubsystem extends SubsystemBase {
         });
 
     m_poseEstimator.update(
-        Rotation2d.fromDegrees(gyro),
+        Rotation2d.fromDegrees(-m_gyro.getAngle()),
         new SwerveModulePosition[] {
             m_frontLeft.getPosition(),
             m_frontRight.getPosition(),
@@ -200,23 +196,45 @@ public class DriveSubsystem extends SubsystemBase {
             m_rearRight.getPosition()
         });
 
-    // double robotYaw = m_gyro.getYaw();
-    // LimelightHelpers.PoseEstimate limelightMeasurementMT1;
-    // // // Get the pose estimate
-    // if (isBlueAlliance().getAsBoolean()) {
-    //   limelightMeasurementMT1 = LimelightHelpers.getBotPoseEstimate_wpiBlue("");
-    // } else {
-    //   limelightMeasurementMT1 = LimelightHelpers.getBotPoseEstimate_wpiRed("");
-    // }
+        LimelightHelpers.PoseEstimate limelightMeasurementMT1;
+        var tagInRobotFrameEDN = LimelightHelpers.getTargetPose3d_RobotSpace("");
+
+      if (isBlueAlliance().getAsBoolean()) {
+        limelightMeasurementMT1 = LimelightHelpers.getBotPoseEstimate_wpiBlue("");
+        } else {
+        limelightMeasurementMT1 = LimelightHelpers.getBotPoseEstimate_wpiRed("");
+           }
+          try {
+            if (tagInRobotFrameEDN != null) {
+              if (LimelightHelpers.getTV("") && LimelightHelpers.getTA("") > 0.22) {
+                m_poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.5, .5, 9999999));
+                m_poseEstimator.addVisionMeasurement(
+                limelightMeasurementMT1.pose,
+                limelightMeasurementMT1.timestampSeconds);
+                m_odometry.resetPose(m_poseEstimator.getEstimatedPosition());
+                // System.out.println("Pose Estimated");
+              }
+            }
+          } catch (Exception e) {
+            DriverStation.reportError("Error updating vision data: " + e.getMessage(), false);
+          }
 
 
-    // publishRobotPose.set(getPose());
-    // gyroPublisher.set(gyro);
-    // megaTag1Publisher.set(limelightMeasurementMT1.pose);
+  //   // Get the pose estimate
+  //   if (isBlueAlliance().getAsBoolean()) {
+  //     limelightMeasurementMT1 = LimelightHelpers.getBotPoseEstimate_wpiBlue("");
+  //   } else {
+  //     limelightMeasurementMT1 = LimelightHelpers.getBotPoseEstimate_wpiRed("");
+  //   }
+
+
+    publishRobotPose.set(getPose());
+  //   gyroPublisher.set(gyro);
+    megaTag1Publisher.set(limelightMeasurementMT1.pose);
     
 
-  //   if(LimelightHelpers.getTV("")) {
-  //   var tagInRobotFrameEDN = LimelightHelpers.getTargetPose3d_RobotSpace("");
+    // if(LimelightHelpers.getTV("")) {
+
   //  // System.out.print("Pose= " + tagInRobotFrameEDN.getX() + ", " + tagInRobotFrameEDN.getY() + ", " + tagInRobotFrameEDN.getZ()); 
   //   // // The X is the side to side distance from the tag, the Z is the forward and backward
   //   // System.out.println(" Dist= " + limelightMeasurementMT1.rawFiducials[0].distToRobot);
@@ -242,13 +260,10 @@ public class DriveSubsystem extends SubsystemBase {
 
   //     if (DriverStation.isAutonomousEnabled()) {
   //       // System.out.println("Auto Add Vision");
-  //       m_poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.5, .5, 9999999));
-  //       m_poseEstimator.addVisionMeasurement(
-  //           limelightMeasurementMT1.pose,
-  //           limelightMeasurementMT1.timestampSeconds);
+  //       
   //     }
   //     if (DriverStation.isTeleopEnabled()) {
-  //       //resetOdometry(tagInRobotFrame.toPose2d());
+  //       resetOdometry(tagInRobotFrame.toPose2d());
   //     }
 
   //     }
@@ -274,7 +289,7 @@ public class DriveSubsystem extends SubsystemBase {
         
     // Create the constraints of the path to be followed
     PathConstraints constraints = new PathConstraints(
-      2.8, 2.8, // these two are different instances of max speeds, you can make them the same.
+      3.8, 3.8, // these two are different instances of max speeds, you can make them the same.
       2 * Math.PI, 2 * Math.PI);
     // Calculate the robot's current velocity and rotation to set as the ideal starting state of the path
     // double vxMetersPerSecond = getState().Speeds.vxMetersPerSecond;
@@ -285,14 +300,16 @@ public class DriveSubsystem extends SubsystemBase {
     IdealStartingState idealStartingState = new IdealStartingState(0, Rotation2d.kZero);
     // Create the new path using the waypoints
     PathPlannerPath path = new PathPlannerPath(
-                                waypoints,
-                                constraints,
-                                idealStartingState, // set this to null if not working
-                                new GoalEndState(0.0, targetPose.getRotation()));
+        waypoints,
+        constraints,
+        null,
+        new GoalEndState(0.0, Rotation2d.fromDegrees(-90)));
+                                
     path.preventFlipping = true;
 
     // Create the path following command
     return AutoBuilder.followPath(path);
+    //return AutoBuilder.pathfindThenFollowPath(path, constraints);
 }
 
   public void setGyro(double angle) {
@@ -461,7 +478,7 @@ public class DriveSubsystem extends SubsystemBase {
     drive(speeds, false);
   }
 
-  private void drive(ChassisSpeeds speeds, boolean fieldRelative) {
+  public void drive(ChassisSpeeds speeds, boolean fieldRelative) {
 
     if (fieldRelative)
       speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getPose().getRotation());

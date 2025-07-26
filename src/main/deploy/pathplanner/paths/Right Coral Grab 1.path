@@ -45,10 +45,10 @@
     "rotation": 53.0
   },
   "reversed": false,
-  "folder": "Right",
+  "folder": "Right 2.5 Coral",
   "idealStartingState": {
     "velocity": 0,
     "rotation": 119.99999999999999
   },
-  "useDefaultConstraints": true
+  "useDefaultConstraints": false
 }

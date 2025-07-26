@@ -23,8 +23,8 @@ public class MoveArmToRotationCommand extends Command {
 
     @Override
     public boolean isFinished() {
-        // End the command when the elevator reaches the desired position
-        return Math.abs(arm.getRotation() - position) < 0.05;
+        // End the command when the arm reaches the desired position
+        return Math.abs(arm.getRotation() - position) < 0.003;
     }
 }
 

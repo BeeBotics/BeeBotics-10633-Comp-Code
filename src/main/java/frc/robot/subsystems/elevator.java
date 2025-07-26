@@ -20,7 +20,7 @@ public class elevator extends SubsystemBase {
         motor = new SparkMax(10, MotorType.kBrushless);
         encoder = motor.getEncoder();
  
-        pid = new PIDController(4, 0, 0.4);
+        pid = new PIDController(2, 0, 0.1);
     }
 
     // Returns elevator height

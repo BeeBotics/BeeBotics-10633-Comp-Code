@@ -20,10 +20,9 @@ public class Climb extends SubsystemBase {
         motor = new SparkMax(20, MotorType.kBrushless);
         encoder = motor.getEncoder();
  
-        pid = new PIDController(3, 0, 0);
+        pid = new PIDController(1, 0, 0);
     }
-
-    // Returns elevator height
+    
     public double getRotation() {
         return encoder.getPosition() / COUNTS_PER_INCH;
     }

@@ -25,7 +25,7 @@ public class Arm extends SubsystemBase {
         pid = new PIDController(20, 0, 0);
     }
 
-    // Returns elevator height
+    // Returns arm Rotation
     public double getRotation() {
         return encoder.getPosition() / COUNTS_PER_INCH;
     }
